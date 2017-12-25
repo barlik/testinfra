@@ -38,6 +38,7 @@ class Package(Module):
         - pkg_info (NetBSD)
         - pkg (FreeBSD)
         - apk (Alpine)
+        - pacman (Archlinux)
         """
         raise NotImplementedError
 
@@ -74,6 +75,8 @@ class Package(Module):
             return RpmPackage
         elif host.exists("apk"):
             return AlpinePackage
+        elif host.exists("pacman"):
+            return PacmanPackage
         else:
             raise NotImplementedError
 
@@ -166,3 +169,19 @@ class AlpinePackage(Package):
     def release(self):
         out = self.check_output("apk -e -v info %s", self.name).split("-")
         return out[-1]
+
+
+class PacmanPackage(Package):
+
+    @property
+    def is_installed(self):
+        return self.run_test("pacman --query %s", self.name).rc == 0
+
+    @property
+    def version(self):
+        out = self.check_output("pacman --query %s", self.name).split()
+        return out[1]
+
+    @property
+    def release(self):
+        raise NotImplementedError
